@@ -34,5 +34,15 @@ namespace Sudoku.Core
 
             return true;
         }
+
+        bool IsColumnValid(byte columnBegin, byte number)
+        {
+            for(int i = columnBegin; i < columnBegin + columnLength; i = i + rowLength)
+            {
+                if(data[i] == number) return false;
+            }
+
+            return true;
+        }
     }
 }
