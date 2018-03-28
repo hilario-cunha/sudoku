@@ -1,1 +1,2 @@
 # sudoku
+Experimentation project.
