@@ -22,7 +22,7 @@ namespace Sudoku.Core
 
         public bool IsNewNumberValid(byte x, byte y, byte number)
         {
-            return IsRowValid((byte)(y * rowLength), number); 
+            return IsRowValid((byte)(y * rowLength), number) && IsColumnValid((byte)(x % rowLength), number); 
         }
 
         bool IsRowValid(byte rowBegin, byte number)
