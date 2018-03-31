@@ -7,8 +7,6 @@ namespace Sudoku.Core
         byte[] data;
         byte rowLength = 9;
         byte columnLength = 9;
-        byte rowGroupLength = 3;
-        byte columnGroupLength = 3;
 
         public Board()
         {
@@ -27,7 +25,8 @@ namespace Sudoku.Core
 
         public bool IsNewNumberValid(byte rowPos, byte columnPos, byte number)
         {
-            return  IsRowValidCore((byte)(rowPos * rowLength), rowLength, number) &&
+            return  (data[columnPos + (rowPos * rowLength)] == 0) &&
+                    IsRowValidCore((byte)(rowPos * rowLength), rowLength, number) &&
                     IsColumnValidCore((byte)(columnPos % columnLength), columnLength, rowLength, number) &&
                     IsGroupValid(GetGroup(rowPos, columnPos), number);
         }
@@ -73,6 +72,9 @@ namespace Sudoku.Core
 
         bool IsGroupValid(Tuple<byte, byte> groupPos, byte number)
         {
+            byte rowGroupLength = 3;
+            byte columnGroupLength = 3;
+
             var rowBegin = (byte)(groupPos.Item1 * rowLength);
             if (!IsRowValidCore(rowBegin, columnGroupLength, number)) return false;
             rowBegin += rowLength;
