@@ -1,115 +1,70 @@
 namespace Sudoku.Core
 {
-    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Linq;
 
     public class Board
     {
-        byte[] data;
+        BoardStore data;
         byte rowLength = 9;
         byte columnLength = 9;
 
-        public Board()
-        {
-            data = new byte[columnLength * rowLength];
-        }
+        public Board() => data = new BoardStore(rowLength, columnLength);
 
-        public bool AddNewNumberIfValid(byte rowPos, byte columnPos, byte number)
+        public bool AddNewNumberIfValid(Point pos, byte number)
         {
-            if (IsNewNumberValid(rowPos, columnPos, number))
+            if (IsNewNumberValid(pos, number))
             {
-                data[columnPos + (rowPos * rowLength)] = number;
+                data.SetDataInPos(pos, number);
                 return true;
             }
             return false;
         }
 
-        public bool IsNewNumberValid(byte rowPos, byte columnPos, byte number)
+        public bool IsNewNumberValid(Point pos, byte number)
         {
-            return  (data[columnPos + (rowPos * rowLength)] == 0) &&
-                    IsRowValidCore((byte)(rowPos * rowLength), rowLength, number) &&
-                    IsColumnValidCore((byte)(columnPos % columnLength), columnLength, rowLength, number) &&
-                    IsGroupValid(GetGroup(rowPos, columnPos), number);
+            return (data.GetDataInPos(pos) == 0) &&
+                    IsRowValidCore(new Point(pos.X, 0), columnLength, number) &&
+                    IsColumnValidCore(new Point(0, pos.Y), rowLength, number) &&
+                    IsGroupValid(GetGroup(pos), number);
         }
 
-        Tuple<byte, byte> GetGroup(byte rowPos, byte columnPos)
+        Point GetGroup(Point pos)
         {
-            if (rowPos >= 6)
-            {
-                if (columnPos >= 6)
-                {
-                    return Tuple.Create<byte, byte>(6, 6);
-                }
-                if (columnPos >= 3)
-                {
-                    return Tuple.Create<byte, byte>(6, 3);
-                }
-                return Tuple.Create<byte, byte>(6, 0);
-            }
+            var x = 0;
+            if (pos.X >= 6) x = 6;
+            if (pos.X >= 3) x = 3;
 
-            if (rowPos >= 3)
-            {
-                if (columnPos >= 6)
-                {
-                    return Tuple.Create<byte, byte>(3, 6);
-                }
-                if (columnPos >= 3)
-                {
-                    return Tuple.Create<byte, byte>(3, 3);
-                }
-                return Tuple.Create<byte, byte>(3, 0);
-            }
+            var y = 0;
+            if (pos.Y >= 6) y = 6;
+            if (pos.Y >= 3) y = 3;
 
-            if (columnPos >= 6)
-            {
-                return Tuple.Create<byte, byte>(0, 6);
-            }
-            if (columnPos >= 3)
-            {
-                return Tuple.Create<byte, byte>(0, 3);
-            }
-            return Tuple.Create<byte, byte>(0, 0);
+            return new Point(x, y);
         }
 
-        bool IsGroupValid(Tuple<byte, byte> groupPos, byte number)
+        IEnumerable<Point> GetRowsPoints(Point begin, byte columnLength) => Enumerable.Range(0, columnLength).Select(i => new Point(begin.X, begin.Y + i));
+
+        IEnumerable<Point> GetColumnsPoints(Point begin, byte rowLength) => Enumerable.Range(0, rowLength).Select(i => new Point(begin.X + i, begin.Y));
+
+        IEnumerable<Point> GetGroupPoints(Point groupPos)
         {
             byte rowGroupLength = 3;
             byte columnGroupLength = 3;
 
-            var rowBegin = (byte)(groupPos.Item1 * rowLength);
-            if (!IsRowValidCore(rowBegin, columnGroupLength, number)) return false;
-            rowBegin += rowLength;
-            if (!IsRowValidCore(rowBegin, columnGroupLength, number)) return false;
-            rowBegin += rowLength;
-            if (!IsRowValidCore(rowBegin, columnGroupLength, number)) return false;
-
-            var columnBegin = groupPos.Item2;
-            if (!IsColumnValidCore(columnBegin, columnGroupLength, rowGroupLength, number)) return false;
-            columnBegin += 1;
-            if (!IsColumnValidCore(columnBegin, columnGroupLength, rowGroupLength, number)) return false;
-            columnBegin += 1;
-            if (!IsColumnValidCore(columnBegin, columnGroupLength, rowGroupLength, number)) return false;
-
-            return true;
+            return (
+                from x in Enumerable.Range(groupPos.X, columnGroupLength)
+                from y in Enumerable.Range(groupPos.Y, rowGroupLength)
+                select new Point(x, y)
+                );
         }
 
-        bool IsRowValidCore(byte rowBegin, byte rowLength, byte number)
-        {
-            for (int i = rowBegin; i < rowBegin + rowLength; i++)
-            {
-                if (data[i] == number) return false;
-            }
+        bool AreDataInPointsValid(IEnumerable<Point> points, byte number) => points.Select(data.GetDataInPos).All(n => n != number);
 
-            return true;
-        }
+        bool IsGroupValid(Point groupPos, byte number) => AreDataInPointsValid(GetGroupPoints(groupPos), number);
 
-        bool IsColumnValidCore(byte columnBegin, byte columnLength, byte rowLength, byte number)
-        {
-            for (int i = columnBegin; i < columnBegin + (columnLength * rowLength); i = i + rowLength)
-            {
-                if (data[i] == number) return false;
-            }
+        bool IsRowValidCore(Point begin, byte columnLength, byte number) => AreDataInPointsValid(GetRowsPoints(begin, columnLength),number);
 
-            return true;
-        }
+        bool IsColumnValidCore(Point begin, byte rowLength, byte number) => AreDataInPointsValid(GetColumnsPoints(begin, rowLength), number);
     }
 }
