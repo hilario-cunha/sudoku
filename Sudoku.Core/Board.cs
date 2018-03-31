@@ -1,45 +1,110 @@
 namespace Sudoku.Core
 {
+    using System;
+
     public class Board
     {
         byte[] data;
         byte rowLength = 9;
         byte columnLength = 9;
+        byte rowGroupLength = 3;
+        byte columnGroupLength = 3;
+
         public Board()
         {
-            data = new byte[columnLength*rowLength];
+            data = new byte[columnLength * rowLength];
         }
 
-        public bool AddNewNumberIfValid(byte x, byte y, byte number)
+        public bool AddNewNumberIfValid(byte rowPos, byte columnPos, byte number)
         {
-            if(IsNewNumberValid(x, y, number))
+            if (IsNewNumberValid(rowPos, columnPos, number))
             {
-                data[x+(y * rowLength)] = number;
+                data[columnPos + (rowPos * rowLength)] = number;
                 return true;
-            }    
+            }
             return false;
         }
 
-        public bool IsNewNumberValid(byte x, byte y, byte number)
+        public bool IsNewNumberValid(byte rowPos, byte columnPos, byte number)
         {
-            return IsRowValid((byte)(y * rowLength), number) && IsColumnValid((byte)(x % rowLength), number); 
+            return  IsRowValidCore((byte)(rowPos * rowLength), rowLength, number) &&
+                    IsColumnValidCore((byte)(columnPos % columnLength), columnLength, rowLength, number) &&
+                    IsGroupValid(GetGroup(rowPos, columnPos), number);
         }
 
-        bool IsRowValid(byte rowBegin, byte number)
+        Tuple<byte, byte> GetGroup(byte rowPos, byte columnPos)
         {
-            for(int i = rowBegin; i < rowBegin + rowLength; i++)
+            if (rowPos >= 6)
             {
-                if(data[i] == number) return false;
+                if (columnPos >= 6)
+                {
+                    return Tuple.Create<byte, byte>(6, 6);
+                }
+                if (columnPos >= 3)
+                {
+                    return Tuple.Create<byte, byte>(6, 3);
+                }
+                return Tuple.Create<byte, byte>(6, 0);
+            }
+
+            if (rowPos >= 3)
+            {
+                if (columnPos >= 6)
+                {
+                    return Tuple.Create<byte, byte>(3, 6);
+                }
+                if (columnPos >= 3)
+                {
+                    return Tuple.Create<byte, byte>(3, 3);
+                }
+                return Tuple.Create<byte, byte>(3, 0);
+            }
+
+            if (columnPos >= 6)
+            {
+                return Tuple.Create<byte, byte>(0, 6);
+            }
+            if (columnPos >= 3)
+            {
+                return Tuple.Create<byte, byte>(0, 3);
+            }
+            return Tuple.Create<byte, byte>(0, 0);
+        }
+
+        bool IsGroupValid(Tuple<byte, byte> groupPos, byte number)
+        {
+            var rowBegin = (byte)(groupPos.Item1 * rowLength);
+            if (!IsRowValidCore(rowBegin, columnGroupLength, number)) return false;
+            rowBegin += rowLength;
+            if (!IsRowValidCore(rowBegin, columnGroupLength, number)) return false;
+            rowBegin += rowLength;
+            if (!IsRowValidCore(rowBegin, columnGroupLength, number)) return false;
+
+            var columnBegin = groupPos.Item2;
+            if (!IsColumnValidCore(columnBegin, columnGroupLength, rowGroupLength, number)) return false;
+            columnBegin += 1;
+            if (!IsColumnValidCore(columnBegin, columnGroupLength, rowGroupLength, number)) return false;
+            columnBegin += 1;
+            if (!IsColumnValidCore(columnBegin, columnGroupLength, rowGroupLength, number)) return false;
+
+            return true;
+        }
+
+        bool IsRowValidCore(byte rowBegin, byte rowLength, byte number)
+        {
+            for (int i = rowBegin; i < rowBegin + rowLength; i++)
+            {
+                if (data[i] == number) return false;
             }
 
             return true;
         }
 
-        bool IsColumnValid(byte columnBegin, byte number)
+        bool IsColumnValidCore(byte columnBegin, byte columnLength, byte rowLength, byte number)
         {
-            for(int i = columnBegin; i < columnBegin + columnLength; i = i + rowLength)
+            for (int i = columnBegin; i < columnBegin + (columnLength * rowLength); i = i + rowLength)
             {
-                if(data[i] == number) return false;
+                if (data[i] == number) return false;
             }
 
             return true;

@@ -7,10 +7,11 @@ namespace Sudoku.ConsoleApp
         static void Main(string[] args)
         {
             var board = new Sudoku.Core.Board();
-            var result1 = board.AddNewNumberIfValid(0,0, 1);
-            var result2 = board.AddNewNumberIfValid(0,1, 1);
+            // var result1 = board.AddNewNumberIfValid(0,0, 1);
+            // var result2 = board.AddNewNumberIfValid(0,1, 1);
             
-            var result3 = board.AddNewNumberIfValid(2,1, 1);
+            var result3 = board.AddNewNumberIfValid(1,0, 1);
+            var result4 = board.AddNewNumberIfValid(5,1, 1);
  
         }
     }
